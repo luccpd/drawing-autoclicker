@@ -29,13 +29,48 @@ fn press_key(key: VIRTUAL_KEY) {
     }
 }
 
+fn mouse_click(x: i32, y: i32) {
+    let ipsize = std::mem::size_of::<INPUT>() as i32;
+    unsafe {
+        let mut input: [INPUT; 2] = std::mem::zeroed();
+        input[0].r#type = INPUT_MOUSE;
+        input[0].Anonymous.mi.dx = x;
+        input[0].Anonymous.mi.dy = y;
+        input[0].Anonymous.mi.dwExtraInfo = 0;
+        input[0].Anonymous.mi.time = 0;
+        input[0].Anonymous.mi.mouseData = 0;
+        input[0].Anonymous.mi.dwFlags = MOUSE_EVENT_FLAGS(0x0002);
+
+        input[1].r#type = INPUT_MOUSE;
+        input[1].Anonymous.mi.dx = x;
+        input[1].Anonymous.mi.dy = y;
+        input[1].Anonymous.mi.dwExtraInfo = 0;
+        input[1].Anonymous.mi.time = 0;
+        input[1].Anonymous.mi.mouseData = 0;
+        input[1].Anonymous.mi.dwFlags = MOUSE_EVENT_FLAGS(0x0004);
+
+        SendInput(&mut input, ipsize);
+    }
+}
+
 fn cursor_image_traversal() {
-    let windows_path = Path::new("img/imagem.jpg");
+    let windows_path = Path::new("img/test.jpg");
     let itt = image::open(windows_path).unwrap();
+
     for i in itt.pixels() {
         //println!("{:?}",i);
         unsafe {
-            SetCursorPos(i.0.try_into().unwrap(), i.1.try_into().unwrap());
+            if GetKeyState(0x41) == 0 {
+                break;
+            }
+
+            if i.2 == Rgba([255, 255, 255, 255]) {
+                let offset_x = i.0 + 100;
+                let offset_y = i.1 + 300;
+                SetCursorPos(offset_x.try_into().unwrap(), offset_y.try_into().unwrap());
+                mouse_click(offset_x.try_into().unwrap(), offset_y.try_into().unwrap());
+                thread::sleep(time::Duration::from_nanos(1));
+            }
         }
     }
 }
